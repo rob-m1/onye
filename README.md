@@ -35,6 +35,9 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 You can now access the application in your web browser at http://127.0.0.1:8000/
+
+---
+
 Feature Overview:
 
 User Management & Authentication
