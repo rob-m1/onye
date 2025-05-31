@@ -5,7 +5,7 @@ Setup Instructions:
 First, clone the project repository from GitHub:
 
 ```bash
-git clone [https://github.com/rob-m1/onye.git](https://github.com/rob-m1/onye.git)
+git clone https://github.com/rob-m1/onye.git
 ```
 
 Create a virtual environment
