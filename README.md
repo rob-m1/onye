@@ -20,6 +20,7 @@ source venv/bin/activate
 
 Now do the following:
 ```bash
+cd onye
 cd django_app
 
 pip install -r requirements.txt
