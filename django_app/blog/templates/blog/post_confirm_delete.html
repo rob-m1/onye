@@ -1,0 +1,19 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}Delete Post{% endblock %}
+
+{% block content %}
+    <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">Delete Post</h2>
+        {# Warning #}
+        <p class="text-gray-700 mb-6 text-center">Are you sure you want to delete the post: "{{ object.title }}"?</p>
+        {# Form button submission #}
+        <form method="post">
+            {% csrf_token %}
+            <div class="flex justify-around">
+                <button type="submit" class="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition duration-200">Delete</button>
+                <a href="{% url 'blog:post_detail' pk=object.pk %}" class="bg-gray-300 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-400 transition duration-200">Cancel</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

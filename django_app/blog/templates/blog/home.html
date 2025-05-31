@@ -1,0 +1,108 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}Home - Django Blog{% endblock %}
+
+{% block content %}
+    <div class="flex flex-col md:flex-row gap-4">
+        <div class="md:w-3/4 mx-auto">
+            <h1 class="text-3xl font-bold mb-6 text-gray-800 text-center">Latest Blog Posts</h1>
+
+            <form action="{% url 'blog:home' %}" method="get" class="mb-6 bg-white p-4 rounded-lg shadow-md flex flex-wrap items-center gap-4 justify-center"
+                id="filterForm"
+                hx-get="{% url 'blog:home' %}"
+                hx-target="#post-list-container"
+                hx-swap="innerHTML"
+                hx-trigger="submit"
+            >
+                {# Search Bar #}
+                <div class="flex-grow">
+                    <label for="search" class="sr-only">Search</label>
+                    <input type="text" id="search" name="q" placeholder="Search by title or content..."
+                           class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           value="{{ search_query }}">
+                </div>
+                
+                {# Category Select #}
+                <div>
+                    <label for="category-actual-select" class="sr-only">Category</label>
+
+                    <div x-data="{
+                                    open: false,
+                                    selectedCategoryValue: '{{ current_category|default:"" }}',
+                                    selectedCategoryText: '{{ current_category|default:"All Categories" }}',
+                                    init() {
+                                        const selectedOption = Array.from(this.$el.querySelector('#category-actual-select').options)
+                                                                    .find(option => option.value === this.selectedCategoryValue);
+                                        if (selectedOption) {
+                                            this.selectedCategoryText = this.truncate(selectedOption.text, 18);
+                                        }
+                                    },
+                                    truncate(text, length) {
+                                        if (text.length > length) {
+                                            return text.substring(0, length) + '...';
+                                        }
+                                        return text;
+                                    },
+                                    selectCategory(value, text) {
+                                        this.selectedCategoryValue = value;
+                                        this.selectedCategoryText = this.truncate(text, 18);
+                                        this.open = false;
+                                    }
+                                }"
+                                @click.away="open = false" class="relative w-64">
+
+                        <select id="category-actual-select" name="category" x-model="selectedCategoryValue"
+                            class="sr-only">
+                            <option value="">All Categories</option>
+                            {% for category in categories %}
+                                <option value="{{ category.name }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <button type="button" @click="open = !open"
+                                class="w-full p-2 border border-gray-300 rounded-md bg-white text-left focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <span x-text="selectedCategoryText" class="block whitespace-normal"></span>
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                        </button>
+
+                        <div x-show="open"
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 translate-y-1"
+                             x-transition:enter-end="opacity-100 translate-y-0"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 translate-y-0"
+                             x-transition:leave-end="opacity-0 translate-y-1"
+                             class="absolute z-10 mt-1 w-full rounded-md bg-white shadow-lg border border-gray-200 py-1"
+                             style="display: none;">
+
+                            <ul class="max-h-60 overflow-y-auto custom-scrollbar">
+                                <li @click="selectCategory('', 'All Categories')"
+                                    class="py-2 px-3 cursor-pointer hover:bg-gray-100 {% if not current_category %}bg-blue-50 text-blue-700{% else %}text-gray-900{% endif %} whitespace-normal">
+                                    All Categories
+                                </li>
+                                {% for category in categories %}
+                                    <li @click="selectCategory('{{ category.name }}', '{{ category.name }}')"
+                                        class="py-2 px-3 cursor-pointer hover:bg-gray-100 {% if current_category == category.name %}bg-blue-50 text-blue-700{% else %}text-gray-900{% endif %} whitespace-normal">
+                                        {{ category.name|truncatechars:18 }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                {# Apply and Reset Buttons #}
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">Apply</button>
+                <a href="{% url 'blog:home' %}" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 transition duration-200">Reset</a>
+            </form>
+            {# Resulting list of posts from query #}
+            <div id="post-list-container">
+                {% include 'blog/includes/post_list.html' %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

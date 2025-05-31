@@ -1,0 +1,40 @@
+{% load widget_tweaks %}
+
+<div id="category-modal" style="display: none;" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+
+    <div class="relative p-6 bg-white w-96 max-w-full mx-auto rounded-lg shadow-lg">
+        <h3 class="text-xl font-bold mb-4">Create New Category</h3>
+        {# Create category form #}
+        <form hx-post="{% url 'blog:create_category_htmx' %}" hx-swap="none" hx-trigger="submit">
+            {% csrf_token %}
+            <div class="mb-4">
+                {# Name Input #}
+                <label for="{{ category_form.name.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">{{ category_form.name.label }}</label>
+                {{ category_form.name|attr:"class:w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" }}
+                {# Error List #}
+                {% for error in category_form.name.errors %}
+                    <p class="text-red-500 text-xs italic">{{ error }}</p>
+                {% endfor %}
+            </div>
+            <div class="mb-4">
+                {# Description Input #}
+                <label for="{{ category_form.description.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">{{ category_form.description.label }}</label>
+                {{ category_form.description|attr:"class:w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-24" }}
+                {# Error List #}
+                {% for error in category_form.description.errors %}
+                    <p class="text-red-500 text-xs italic">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {# Confirmation buttons #}
+            <div class="flex justify-end gap-2">
+                <button type="button" class="bg-gray-300 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-400"
+                        hx-on:click="this.closest('#category-modal').remove()">
+                    Cancel
+                </button>
+                <button type="submit" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+                    Create
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

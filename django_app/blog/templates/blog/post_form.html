@@ -1,0 +1,121 @@
+{% extends 'blog/base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}{% if form.instance.pk %}Edit Post{% else %}Create New Post{% endif %}{% endblock %}
+
+{% block content %}
+    <div class="max-w-xl mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">{% if form.instance.pk %}Edit Post{% else %}Create New Post{% endif %}</h2>
+        <form method="post">
+            {% csrf_token %}
+
+            {# Title Field #}
+            <div class="mb-4">
+                <label for="{{ form.title.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">{{ form.title.label }}</label>
+                {{ form.title|attr:"class:w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" }}
+                {% if form.title.help_text %}
+                    <p class="text-gray-500 text-xs italic">{{ form.title.help_text }}</p>
+                {% endif %}
+                {% for error in form.title.errors %}
+                    <p class="text-red-500 text-xs italic">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            {# Content Field #}
+            <div class="mb-4">
+                <label for="{{ form.content.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">{{ form.content.label }}</label>
+                {{ form.content|attr:"class:w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-32" }}
+                {% if form.content.help_text %}
+                    <p class="text-gray-500 text-xs italic">{{ form.content.help_text }}</p>
+                {% endif %}
+                {% for error in form.content.errors %}
+                    <p class="text-red-500 text-xs italic">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            {# Categories Field #}
+            <div class="mb-4">
+                <label for="{{ form.categories.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">{{ form.categories.label }}</label>
+                {{ form.categories|attr:"class:w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" }}
+                {% if form.categories.help_text %}
+                    <p class="text-gray-500 text-xs italic">{{ form.categories.help_text }}</p>
+                {% endif %}
+                {% for error in form.categories.errors %}
+                    <p class="text-red-500 text-xs italic">{{ error }}</p>
+                {% endfor %}
+                <p class="text-gray-500 text-xs mt-1">
+                    Hold Ctrl (Windows) or Cmd (Mac) to select multiple categories.
+                    <button type="button" class="text-blue-600 hover:underline ml-2"
+                            hx-get="{% url 'blog:create_category_htmx' %}"
+                            hx-target="body"
+                            hx-swap="none">
+                         Create New Category
+                    </button>
+                </p>
+            </div>
+            {# Submit #}
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-200">
+                {% if form.instance.pk %}Update Post{% else %}Create Post{% endif %}
+            </button>
+        </form>
+    </div>
+    {# Handles the category form popup and adding the new category to the list #}
+    <script>
+        document.body.addEventListener('htmx:afterRequest', function(evt) {
+            const responseURL = evt.detail.xhr.responseURL;
+
+            if (responseURL.includes("{% url 'blog:create_category_htmx' %}")) {
+                try {
+                    const response = JSON.parse(evt.detail.xhr.responseText);
+
+                    if (response.html) {
+                        const existingModal = document.getElementById('category-modal');
+                        if (existingModal) {
+                            existingModal.outerHTML = response.html;
+                        } else {
+                            document.body.insertAdjacentHTML('beforeend', response.html);
+                        }
+                        const newOrExistingModal = document.getElementById('category-modal');
+                        if (newOrExistingModal) {
+                            htmx.process(newOrExistingModal);
+                            newOrExistingModal.style.display = 'flex';
+                        }
+                    } else if (response.success && response.name && response.id) {
+                        const selectElement = document.getElementById("{{ form.categories.id_for_label }}");
+                        if (selectElement) {
+                            let optionAlreadyExists = false;
+                            // Check if an option with the same value (ID) already exists
+                            for (let i = 0; i < selectElement.options.length; i++) {
+                                if (selectElement.options[i].value == response.id) {
+                                    selectElement.options[i].selected = true;
+                                    optionAlreadyExists = true;
+                                    break;
+                                }
+                            }
+
+                            if (!optionAlreadyExists) {
+                                // If the option does not exist, create and add it
+                                const newOption = new Option(response.name, response.id, true, true);
+                                selectElement.add(newOption);
+                            }                            
+                            selectElement.dispatchEvent(new Event('change', { bubbles: true })); 
+                        
+                        } else {
+                            console.error("Category select element not found with ID:", "{{ form.categories.id_for_label }}");
+                        }
+
+                        const modal = document.getElementById('category-modal');
+                        if (modal) {
+                            modal.remove();
+                        }
+                    } else {
+                        console.warn("Unhandled HTMX response for category creation:", response);
+                    }
+                } catch (e) {
+                    console.error("Error parsing JSON response or handling htmx:afterRequest:", e, evt.detail.xhr.responseText);
+                }
+            }
+        });
+    </script>
+
+{% endblock content %}

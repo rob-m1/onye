@@ -1,0 +1,103 @@
+{# blog/includes/post_list.html #}
+
+{# This div will be the target for HTMX pagination updates #}
+<div id="post-list-container">
+    {# Category Description (keep this outside the dynamic part if it's not changing with pagination) #}
+    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+        {% if selected_category_obj %}
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Category: {{ selected_category_obj.name }}</h2>
+            {% if selected_category_obj.description %}
+                <p class="text-gray-700">{{ selected_category_obj.description }}</p>
+            {% else %}
+                <p class="text-gray-700 italic">No description available for this category.</p>
+            {% endif %}
+        {% else %}
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Category Information</h2>
+            <p class="text-gray-700 italic">Please select a category from the dropdown to see its description.</p>
+        {% endif %}
+    </div>
+
+    {# Resulting blog post list from query #}
+    {% if blog_posts %}
+        <div class="grid grid-cols-1 gap-6">
+            {% for post in blog_posts %}
+                <article class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+                    {# Title #}
+                    <h2 class="text-2xl font-semibold mb-2 text-gray-900">
+                        <a href="{% url 'blog:post_detail' pk=post.pk %}" class="hover:text-blue-600">
+                            {{ post.title }}
+                        </a>
+                    </h2>
+                    {# User and date posted #}
+                    <p class="text-gray-600 text-sm mb-3">
+                        By <span class="font-medium text-gray-700">{{ post.author.username }}</span>
+                        on <span class="local-datetime" data-utc-datetime="{{ post.created_at|date:'c' }}"></span>
+                    </p>
+                    {# Categories #}
+                    <div class="mb-4">
+                        {% for category in post.categories.all %}
+                            <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mr-2 mb-2">
+                                {{ category.name|truncatechars:15 }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                    {# Post content #}
+                    <p class="text-gray-700 leading-relaxed">{{ post.content|truncatewords:50 }}</p>
+                    {# Read more button #}
+                    <div class="mt-4">
+                        <a href="{% url 'blog:post_detail' pk=post.pk %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                            Read More &rarr;
+                        </a>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+
+        {% if is_paginated %}
+            <div class="flex justify-center mt-8" id="pagination-container"> {# This ID is actually *inside* the main target #}
+                <nav class="relative z-0 inline-flex shadow-sm -space-x-px" aria-label="Pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                           class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                           hx-get="?page={{ page_obj.previous_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                           hx-target="#post-list-container" hx-swap="outerHTML"> {# Pointing to the outer div #}
+                            <span class="sr-only">Previous</span>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <span aria-current="page" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-600 text-sm font-medium text-white">
+                                {{ num }}
+                            </span>
+                        {% else %}
+                            <a href="?page={{ num }}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                               class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                               hx-get="?page={{ num }}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                               hx-target="#post-list-container" hx-swap="outerHTML"> {# Pointing to the outer div #}
+                                {{ num }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                           class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                           hx-get="?page={{ page_obj.next_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}"
+                           hx-target="#post-list-container" hx-swap="outerHTML"> {# Pointing to the outer div #}
+                            <span class="sr-only">Next</span>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10l-3.293-3.293a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    {% endif %}
+                </nav>
+            </div>
+        {% endif %}
+    {% else %}
+        <p class="text-gray-600 text-lg text-center">No blog posts found.</p>
+    {% endif %}
+</div>
